@@ -1,0 +1,19 @@
+{
+  "name": "kpopalbums-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Assignment 1 for Web Prog.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Serenity Mapatac",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "prisma": "^5.20.0"
+  }
+}
