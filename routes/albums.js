@@ -40,39 +40,55 @@ router.get('/get/:id', async (req, res) => {
 router.post('/create', upload.single('image'), async (req, res) => {
     const { albumName, artist } = req.body;
     const filename = req.file ? req.file.filename : null;
-    
-    if (!albumName || !artist) return res.status(400).send('Required fields must have a value.');
 
-    const album = await prisma.album.create({
-      // All the required values to create an album model
-        data: { 
-          albumName, 
-          artist, 
-          filename }
-    });
+    try {
+        // Create a new album record in the database
+        const album = await prisma.album.create({
+            data: { 
+                albumName, 
+                artist, 
+                filename, // Optional field
+                year: req.body.year || null, // Optional field
+                country: req.body.country || null, // Optional field
+                embed: req.body.embed || null, // Optional field
+            }
+        });
 
-    res.json(album);
+        // Send the created album back in the response
+        res.json(album);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // Update an album by ID
 router.put('/update/:id', upload.single('image'), async (req, res) => {
     const id = parseInt(req.params.id);
-    const { albumName, artist } = req.body;
+    const { albumName, artist, year, country, embed } = req.body;
     const updatedData = {};
+    const newFilename = req.file ? req.file.filename : null;
 
     if (!albumName && !artist && !req.file) return res.status(400).json({ message: 'No fields to update' });
     
     if (albumName) updatedData.albumName = albumName;
     if (artist) updatedData.artist = artist;
+    if (year) updatedData.year = year;
+    if (country) updatedData.country = country;
+    if (embed) updatedData.embed = embed;
 
-    if (req.file) {
+    if (newFilename) {
         updatedData.filename = req.file.filename;
         const album = await prisma.album.findUnique({ where: { id } });
-
+    
         if (!album) return res.status(404).json({ message: 'Album not found' });
-
-        const oldImagePath = path.join('public/images', album.filename);
-        fs.promises.unlink(oldImagePath).catch(err => console.error(`Failed to delete old image: ${err.message}`));
+    
+        // Check if the album has a filename before trying to delete the old image
+        if (album.filename) {
+            const oldImagePath = path.join('public/images', album.filename);
+            fs.promises.unlink(oldImagePath)
+                .catch(err => console.error(`Failed to delete old image: ${err.message}`));
+        }
     }
 
     const updatedAlbum = await prisma.album.update({
@@ -90,8 +106,11 @@ router.delete('/delete/:id', async (req, res) => {
 
     if (!album) return res.status(404).json({ message: 'Album not found' });
 
-    const oldImagePath = path.join('public/images', album.filename);
-    await fs.promises.unlink(oldImagePath).catch(err => console.error(`Failed to delete old image: ${err.message}`));
+    if (album.filename) {
+        const oldImagePath = path.join('public/images', album.filename);
+        fs.promises.unlink(oldImagePath)
+            .catch(err => console.error(`Failed to delete old image: ${err.message}`));
+    }
 
     const deletedAlbum = await prisma.album.delete({ where: { id } });
 

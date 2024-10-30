@@ -18,6 +18,9 @@ model Album {
   id        Int       @id @default(autoincrement())
   albumName String
   artist  String
+  year  String
+  country String
+  embed String
   filename  String? // nullable
   createdAt DateTime  @default(now())
 }
